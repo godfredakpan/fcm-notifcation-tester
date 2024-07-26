@@ -22,10 +22,6 @@
     <div class="container">
         <h1>FCM Push Notification Test</h1>
         <div>
-            <label for="serverKey">Server Key:</label>
-            <input type="text" id="serverKey" placeholder="Enter your server key">
-        </div>
-        <div>
             <label for="deviceToken">Device Token:</label>
             <input type="text" id="deviceToken" placeholder="Enter device token">
         </div>
@@ -44,20 +40,34 @@
         <pre id="response"></pre>
         <footer>
             <p>&copy; <span id="year"></span> Godfred Akpan. All rights reserved.</p>
-
         </footer>
     </div>
 
     <script>
-        document.getElementById('sendNotification').addEventListener('click', () => {
-            const serverKey = document.getElementById('serverKey').value;
+        async function getAccessToken() {
+            try {
+                const url = 'http://localhost:3000/';
+                const response = await fetch(`${url}api/getAccessToken`);
+                console.log(response);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                return data.accessToken;
+            } catch (error) {
+                console.error('Error fetching access token:', error);
+                return null;
+            }
+        }
+
+        document.getElementById('sendNotification').addEventListener('click', async () => {
             const deviceToken = document.getElementById('deviceToken').value;
             const title = document.getElementById('notificationTitle').value;
             const body = document.getElementById('notificationBody').value;
             const spinner = document.getElementById('spinner');
             const button = document.getElementById('sendNotification');
 
-            if (!serverKey || !deviceToken || !title || !body) {
+            if ( !deviceToken || !title || !body) {
                 alert('Please enter all required fields.');
                 return;
             }
@@ -65,19 +75,28 @@
             spinner.style.display = 'block';
             button.disabled = true;
 
+            const accessToken = await getAccessToken();
+            if (!accessToken) {
+                document.getElementById('response').textContent = 'Failed to retrieve access token.';
+                spinner.style.display = 'none';
+                button.disabled = false;
+                return;
+            }
+
             const notificationData = {
-                to: deviceToken,
-                notification: {
-                    title: title,
-                    body: body,
-                    sound: "default"
+                message: {
+                    token: deviceToken,
+                    notification: {
+                        body: body,
+                        title: title
+                    }
                 }
             };
-
-            fetch('https://fcm.googleapis.com/fcm/send', {
+            const url = 'https://fcm.googleapis.com/v1/projects/beautygo-3eb82/messages:send';
+            fetch(url, {
                 method: 'POST',
                 headers: {
-                    'Authorization': 'key=' + serverKey,
+                    'Authorization': 'Bearer ' + accessToken,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(notificationData)
@@ -95,8 +114,8 @@
             });
         });
 
+        // Set the current year in the footer
         document.getElementById('year').textContent = new Date().getFullYear();
-
     </script>
 </body>
 </html>
