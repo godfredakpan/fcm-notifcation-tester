@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <!-- author -->
+    <meta name="author" content="Godfred Akpan">
+    <!-- description -->
+    <meta name="description" content="FCM Push Notification Test">
+    <!-- keywords -->
+    <meta name="keywords" content="fcm, push, notification, test, html, css, javascript">
+    <!-- Organization -->
+    <meta name="organization" content="Werun Technology">
+    <!-- style -->
+    <link rel="stylesheet" href="style.css">
+
+    <title>FCM Push Notification Test</title>
+
+</head>
+<body>
+    <div class="container">
+        <h1>FCM Push Notification Test</h1>
+        <div>
+            <label for="serverKey">Server Key:</label>
+            <input type="text" id="serverKey" placeholder="Enter your server key">
+        </div>
+        <div>
+            <label for="deviceToken">Device Token:</label>
+            <input type="text" id="deviceToken" placeholder="Enter device token">
+        </div>
+        <div>
+            <label for="notificationTitle">Notification Title:</label>
+            <input type="text" id="notificationTitle" placeholder="Enter notification title">
+        </div>
+        <div>
+            <label for="notificationBody">Notification Body:</label>
+            <input type="text" id="notificationBody" placeholder="Enter notification body">
+        </div>
+        <button id="sendNotification">Send Notification
+            <div class="spinner" id="spinner" style="display: none;"></div>
+        </button>
+        <h2>Response:</h2>
+        <pre id="response"></pre>
+        <footer>
+            <p>&copy; <span id="year"></span> Godfred Akpan. All rights reserved.</p>
+
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('sendNotification').addEventListener('click', () => {
+            const serverKey = document.getElementById('serverKey').value;
+            const deviceToken = document.getElementById('deviceToken').value;
+            const title = document.getElementById('notificationTitle').value;
+            const body = document.getElementById('notificationBody').value;
+            const spinner = document.getElementById('spinner');
+            const button = document.getElementById('sendNotification');
+
+            if (!serverKey || !deviceToken || !title || !body) {
+                alert('Please enter all required fields.');
+                return;
+            }
+
+            spinner.style.display = 'block';
+            button.disabled = true;
+
+            const notificationData = {
+                to: deviceToken,
+                notification: {
+                    title: title,
+                    body: body,
+                    sound: "default"
+                }
+            };
+
+            fetch('https://fcm.googleapis.com/fcm/send', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'key=' + serverKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(notificationData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+                spinner.style.display = 'none';
+                button.disabled = false;
+            })
+            .catch(error => {
+                document.getElementById('response').textContent = 'Error: ' + error;
+                spinner.style.display = 'none';
+                button.disabled = false;
+            });
+        });
+
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+    </script>
+</body>
+</html>
